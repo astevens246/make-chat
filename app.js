@@ -6,7 +6,7 @@ const server = require('http').Server(app);
 
 //Express View Engine for Handlebars
 const exphbs  = require('express-handlebars');
-app.engine('handlebars', exphbs());
+app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 
 app.get('/', (req, res) => {
