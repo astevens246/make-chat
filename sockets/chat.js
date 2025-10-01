@@ -21,6 +21,11 @@ module.exports = (io, socket, onlineUsers) => {
     io.emit('new message', data);
   })
 
+  // Register initial new channel event (logging only)
+  socket.on('new channel', (newChannel) => {
+    console.log(newChannel);
+  });
+
   // This fires when a user closes out of the application
   socket.on('disconnect', () => {
     //This deletes the user by using the username we saved to the socket
