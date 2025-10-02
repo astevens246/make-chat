@@ -5,6 +5,10 @@ $(document).ready(()=>{
   let currentUser;
   // Get the online users from the server
   socket.emit('get online users');
+  // Get the existing channels from the server
+  socket.emit('get channels');
+  //Each user should be in the general channel by default.
+  socket.emit('user changed channel', "General");
 
   $('#create-user-btn').click((e)=>{
     e.preventDefault();
@@ -42,6 +46,12 @@ $(document).ready(()=>{
       socket.emit('new channel', newChannel);
       $('#new-channel-input').val("");
     }
+  });
+
+  //Users can change the channel by clicking on its name.
+  $(document).on('click', '.channel', (e)=>{
+    let newChannel = e.target.textContent;
+    socket.emit('user changed channel', newChannel);
   });
 
   //socket listeners
@@ -82,9 +92,22 @@ $(document).ready(()=>{
     }
   })
 
+  // Receive all existing channels when connecting
+  socket.on('get channels', (channels) => {
+    // Display all existing channels (skip General since it's already in HTML)
+    for(let channelName in channels) {
+      if(channelName !== 'General') {
+        $('.channels').append(`<div class="channel">${channelName}</div>`);
+      }
+    }
+  });
+
   // Add the new channel to the channels list (Fires for all clients)
   socket.on('new channel', (newChannel) => {
-    $('.channels').append(`<div class="channel">${newChannel}</div>`);
+    // Only add if it doesn't already exist to prevent duplicates
+    if(!$(`.channel:contains('${newChannel}')`).length) {
+      $('.channels').append(`<div class="channel">${newChannel}</div>`);
+    }
   });
 
   // Make the channel joined the current channel. Then load the messages.
@@ -92,8 +115,15 @@ $(document).ready(()=>{
   socket.on('user changed channel', (data) => {
     $('.channel-current').addClass('channel');
     $('.channel-current').removeClass('channel-current');
-    $(`.channel:contains('${data.channel}')`).addClass('channel-current');
-    $('.channel-current').removeClass('channel');
+    
+    // Find the channel element
+    let channelElement = $(`.channel:contains('${data.channel}')`);
+    if (channelElement.length === 0) {
+      return;
+    }
+    
+    channelElement.addClass('channel-current');
+    channelElement.removeClass('channel');
     $('.message').remove();
     data.messages.forEach((message) => {
       $('.message-container').append(`

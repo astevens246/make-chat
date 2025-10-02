@@ -15,6 +15,11 @@ module.exports = (io, socket, onlineUsers, channels) => {
     socket.emit('get online users', onlineUsers);
   })
 
+  socket.on('get channels', () => {
+    //Send over the channels
+    socket.emit('get channels', channels);
+  })
+
   //Listen for new messages with channels
   socket.on('new message', (data) => {
     //Save the new message to the channel.
@@ -31,6 +36,15 @@ module.exports = (io, socket, onlineUsers, channels) => {
     //Inform all clients of the new channel.
     io.emit('new channel', newChannel);
     //Emit to the client that made the new channel, to change their channel to the one they made.
+    socket.emit('user changed channel', {
+      channel : newChannel,
+      messages : channels[newChannel]
+    });
+  });
+
+  //Have the socket join the room of the channel
+  socket.on('user changed channel', (newChannel) => {
+    socket.join(newChannel);
     socket.emit('user changed channel', {
       channel : newChannel,
       messages : channels[newChannel]
